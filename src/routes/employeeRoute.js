@@ -1,0 +1,14 @@
+const express = require('express');
+const router = express.Router();
+const employeeController = require('../controller/EmployeeControllers');
+const taskController = require('../controller/TaskController');
+const authenticate = require('../middlewares/authenticate');
+const authorize = require('../middlewares/authorize');
+router.post('/setupAccount', employeeController.setupAccount);
+router.post('/login', employeeController.employeeLogin);
+router.post('/refreshToken', employeeController.refreshToken);
+router.get('/profile/:empId', authenticate, authorize(['employee']), employeeController.getProfile);
+router.post('/editProfile',authenticate, authorize(['employee']), employeeController.editProfile);
+router.get('/tasks/:empId', authenticate, authorize(['employee']), taskController.getTasksOfEmp);
+router.post('/completeTask',authenticate, authorize(['employee']), taskController.completeTask)
+module.exports = router;
