@@ -29,6 +29,7 @@ async function getOwnerByPhoneNumber(phoneNumber) {
 async function createEmployee(employeeData) {
   const employeePayload = {
     ...employeeData,
+    status: "pending",
     createdAt: new Date()
   };
   const docRef = await db.collection('employees').add(
@@ -49,7 +50,7 @@ async function updateEmployee(eId, employeeData) {
 }
 async function getEmployeesByOwner(ownerId) {
   const snapshot = await db.collection('employees')
-    .where('ownerId', '==', ownerId).select('id', 'name', 'email', 'ownerId', 'username', 'role').get();
+    .where('ownerId', '==', ownerId).select('id', 'name', 'email', 'ownerId', 'username', 'role', 'status').get();
   if (snapshot.empty) {
     return [];
   }
@@ -84,6 +85,40 @@ async function findEmployeeByRefreshToken(token) {
 }
 async function getEmployeesByUsername(username) {
   const snapshot = await db.collection('employees').where('username', '==', username).get();
+  if (snapshot.empty) {
+    return [];
+  }
+  const employees = [];
+  snapshot.forEach(doc => {
+    employees.push({ id: doc.id, ...doc.data() });
+  });
+  return employees;
+}
+async function getEmployeesByUsername(username) {
+  const snapshot = await db.collection('employees').where('username', '==', username).get();
+  if (snapshot.empty) {
+    return [];
+  }
+  const employees = [];
+  snapshot.forEach(doc => {
+    employees.push({ id: doc.id, ...doc.data() });
+  });
+  return employees;
+}
+async function getEmployeesByEmail(email) {
+  const snapshot = await db.collection('employees').where('email', '==', email).get();
+  if (snapshot.empty) {
+    return [];
+  }
+  const employees = [];
+  snapshot.forEach(doc => {
+    employees.push({ id: doc.id, ...doc.data() });
+  });
+  return employees;
+}
+
+async function getEmployeesByotpRSPass(otp) {
+  const snapshot = await db.collection('employees').where('otpRSPass', '==', otp).get();
   if (snapshot.empty) {
     return [];
   }
@@ -181,6 +216,8 @@ module.exports = {
   getEmployeesBySetupToken,
   getEmployeesByUsername,
   getEmployeesById,
+  getEmployeesByEmail,
+  getEmployeesByotpRSPass,
   deleteEmployee,
   createSchedule,
   getSchedulesByEmployee,

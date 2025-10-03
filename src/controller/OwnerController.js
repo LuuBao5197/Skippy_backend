@@ -68,7 +68,7 @@ exports.ownerLogin = async (req, res) => {
 
 exports.createEmployeeHandler = async function createEmployeeHandler(req, res) {
     const { name, email, role } = req.body;
-    const ownerId = req.user.phoneNumber; // Lấy từ middleware xác thực
+    const ownerId = req.user.phoneNumber; 
 
     try {
         const employeeData = { name, email, role, ownerId };

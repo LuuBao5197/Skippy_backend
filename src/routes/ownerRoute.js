@@ -4,10 +4,9 @@ const ownerController = require('../controller/OwnerController');
 const taskController = require('../controller/TaskController');
 const authenticate = require('../middlewares/authenticate');
 const authorize = require('../middlewares/authorize');
-// POST /api/owners/send-code -> Gửi mã OTP
+// POST /api/owners/send-code -> Send to AccessCode
 router.post('/send-code', ownerController.createAccessCode);
 
-// POST /api/owners/login -> Xác thực mã OTP để đăng nhập
 router.post('/login', ownerController.ownerLogin);
 
 // ... Thêm các route khác cho owner nếu có ...
