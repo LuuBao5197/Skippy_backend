@@ -15,8 +15,6 @@ const io = new Server(server, {
   }
 });
 
-// Set up Global configuration access
-// dotenv.config();
 const ownerRoutes = require('./src/routes/ownerRoute');
 const empRoutes = require('./src/routes/employeeRoute');
 

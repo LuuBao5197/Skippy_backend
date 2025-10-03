@@ -1,13 +1,16 @@
 const firestoreService = require('../services/fireStoreService');
 const jwtService = require('../configs/jwt/index');
 const bcrypt = require('bcryptjs');
+const { sendEmail } = require('../services/emailService');
 exports.setupAccount = async (req, res) => {
     const { username, password, setupToken } = req.body;
     const employee = await firestoreService.getEmployeesBySetupToken(setupToken);  // 1 array
 
-    if (!employee) {
+    if (!employee || employee.length === 0) {
         return res.status(400).json({ message: 'Ban khong co quyen thiet lap tai khoan ' });
     }
+    const emp = employee[0];
+
     const existEmployee = await firestoreService.getEmployeesByUsername(username);
     if (existEmployee.length > 0) {
         return res.status(400).json({ message: 'Username da ton tai, vui long chon username khac ' });
@@ -15,10 +18,12 @@ exports.setupAccount = async (req, res) => {
     const hashPass = await bcrypt.hash(password, 10);
     const data = {
         username,
-        hashPass
+        hashPass,
+        status: "active"
     }
     try {
-        await firestoreService.updateEmployee(employee[0].id, data);
+        console.log(employee);
+        await firestoreService.updateEmployee(emp.id, data);
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Internal server error.' });
@@ -103,18 +108,18 @@ exports.getProfile = async (req, res) => {
         });
     }
     const data = {
-        "name":emp.name,
-        "email":emp.email,
-        "username":emp.username,
-        "id":empId
+        "name": emp.name,
+        "email": emp.email,
+        "username": emp.username,
+        "id": empId
     }
     return res.status(200).json({
-        message: "Get user profile success", "emp":data
+        message: "Get user profile success", "emp": data
     })
 }
 exports.editProfile = async (req, res) => {
     const editEmp = req.body;
-     try {
+    try {
         await firestoreService.updateEmployee(editEmp.id, editEmp);
     } catch (error) {
         console.error(error);
@@ -123,4 +128,73 @@ exports.editProfile = async (req, res) => {
     return res.status(200).json({
         message: "Update profile success",
     })
+}
+exports.getOtpForgotPassword = async (req, res) => {
+    const { email } = req.body;
+    const employee = await firestoreService.getEmployeesByEmail(email);
+    console.log(employee);
+    if (!employee || employee.length === 0) {
+        return res.status(400).json({ message: 'Email is not valid.' });
+    }
+    const emp = employee[0];
+    const otpRSPass = Math.floor(100000 + Math.random() * 900000).toString();
+
+    try {
+        await firestoreService.updateEmployee(emp.id, { otpRSPass });
+        await sendEmail(
+            email,
+            'Welcome! This is email to reset password.',
+            'forgotPassword',
+            {
+                name: emp.name,
+                otp: otpRSPass // Truyền link vào template
+            }
+        );
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error.' });
+    }
+    return res.status(200).json({
+        message: "Send otp success",
+    })
+}
+exports.validOtpFGPass = async (req, res) => {
+    const { otp } = req.body;
+    const employee = await firestoreService.getEmployeesByotpRSPass(otp);
+    if (!employee || employee.length == 0) {
+        return res.status(400).json({
+            message: "Otp is not valid"
+        })
+    }
+    const emp = employee[0];
+    const otpInDB = emp.otpRSPass;
+    if (otpInDB !== otp) {
+        return res.status(400).json({
+            message: "Otp is not valid"
+        })
+    }
+    return res.status(200).json({
+        message: "Otp is match"
+    })
+
+}
+exports.resetPassword = async (req, res) => {
+    const { otp, newPassword } = req.body;
+    const employee = await firestoreService.getEmployeesByotpRSPass(otp);
+    if (!employee || employee.length == 0) {
+        return res.status(400).json({
+            message: "This is not your account had been sent to email with otp"
+        })
+    }
+    const emp = employee[0];
+    const hashPass = await bcrypt.hash(newPassword, 10);
+
+    try {
+        await firestoreService.updateEmployee(emp.id, {hashPass})
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error.' });
+    }
+    return res.status(200).json({message: "Change password success fully"});
+
 }
